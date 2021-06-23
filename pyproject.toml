@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "b-uplift"
+version = "0.0.1"
+description = "A Python package for uplift modeling with PySpark and H2O"
+authors = ["Javier Albert <javier.albert@booking.com>", "Nam Pham <nam.pham@booking.com>", "Irene Teinemaa <irene.teinemaa@booking.com>"]
+readme = "README.md"
+homepage = "https://gitlab.booking.com/datascience/upliftml"
+repository = "https://gitlab.booking.com/datascience/upliftml"
+documentation = "https://gitlab.booking.com/datascience/upliftml"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Scientific/Engineering"
+]
+include = ["py.typed"]
+packages = [
+    { include = "upliftml" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.7.1"
+pydantic = "^1.8"
+numpy = "^1.20.1"
+pandas = "^1.2"
+seaborn = "^0.11.1"
+matplotlib = "^3.4.0"
+scikit-learn = "^0.24"
+
+[tool.poetry.dev-dependencies]
+pyspark = "2.4.7"
+pyspark-stubs = "2.4.0.post9"
+pandas-stubs = "^1.0.4"
+psutil = "^5.8.0"
+pyarrow = "^3.0.0"
+tables = "^3.6.1"
+h5py = "^3.1.0"
+pytest = "^6.2"
+pytest-env = "^0.6.2"
+mock = "^4.0.3"
+mypy = "^0.812"
+data-science-types = "^0.2"
+flake8 = "^3.8"
+pep8-naming = "^0.11"
+flake8-quotes = "^3.2"
+flake8-import-order = "^0.18"
+black = "^20.8b1"
+isort = "^5.7.0"
+anybadge = "^1.7"
+lxml = "^4.6"
+coverage = "^5.0b1"
+sphinx = "^4.0.2"
+sphinxcontrib-bibtex = "^2.3.0"
+
+# mkdocs dependencies
+mkdocstrings = "^0.15"
+mkdocs-material = "^7.0.1"
+
+# poetry itself
+poetry = "^1.1"
+
+# h2o
+h2o = { url = "https://h2o-release.s3.amazonaws.com/h2o/rel-zipf/1/Python/h2o-3.32.1.1-py2.py3-none-any.whl" }
+requests = "^2.25.1"
+colorama = ">=0.3.8"
+tabulate = "^0.8.9"
+future = "^0.18.2"
+"h2o-pysparkling-2.4" = "^3.32.1"
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "booking"
+url = "https://jfrog.booking.com/artifactory/api/pypi/pypi-local/simple"
+
+[tool.poetry.extras]
+docs = ["sphinx"]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+

@@ -1,0 +1,16 @@
+[flake8]
+# Use the more relaxed max line length permitted in PEP8.
+max-line-length = 120
+ignore = E203, E266, E501, W503, F403, F401, W293
+max-complexity = 18
+select = B,C,E,F,W,T4,B9
+
+# Enforce the Google Python style for grouping and sorting imports:
+#   https://github.com/google/styleguide/blob/gh-pages/pyguide.md#313-imports-formatting
+import-order-style = google
+
+# Inform flake8-import-order plugin that `metasearch_data` should be treated as a local package name.
+application-import-names = uplift
+
+inline-quotes = double
+
