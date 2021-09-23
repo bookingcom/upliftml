@@ -4,7 +4,7 @@ upliftml package
 PySpark-based Estimators
 ---------------------------
 
-.. automodule:: uplift.models.pyspark
+.. automodule:: upliftml.models.pyspark
     :members:
     :imported-members:
     :undoc-members:
@@ -14,7 +14,7 @@ PySpark-based Estimators
 H2O-based Estimators
 ---------------------------
 
-.. automodule:: uplift.models.h2o
+.. automodule:: upliftml.models.h2o
     :members:
     :imported-members:
     :undoc-members:
@@ -24,7 +24,7 @@ H2O-based Estimators
 Evaluation and Plotting Functions
 -----------------------------------
 
-.. automodule:: uplift.evaluation
+.. automodule:: upliftml.evaluation
     :members:
     :imported-members:
     :undoc-members:
@@ -33,7 +33,7 @@ Evaluation and Plotting Functions
 Data Simulators
 -----------------------------------
 
-.. automodule:: uplift.datasets
+.. automodule:: upliftml.datasets
     :members:
     :imported-members:
     :undoc-members:
