@@ -4,9 +4,9 @@ version = "0.0.1"
 description = "A Python package for uplift modeling with PySpark and H2O"
 authors = ["Javier Albert <javier.albert@booking.com>", "Nam Pham <nam.pham@booking.com>", "Irene Teinemaa <irene.teinemaa@booking.com>"]
 readme = "README.md"
-homepage = "https://gitlab.booking.com/datascience/upliftml"
-repository = "https://gitlab.booking.com/datascience/upliftml"
-documentation = "https://gitlab.booking.com/datascience/upliftml"
+homepage = "https://github.com/bookingcom/upliftml"
+repository = "https://github.com/bookingcom/upliftml"
+documentation = "https://upliftml.readthedocs.io/en/latest/"
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",

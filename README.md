@@ -1,4 +1,7 @@
 # UpliftML: A Python Package for Scalable Uplift Modeling
+
+![upliftml](docs/upliftml.png)
+
 **UpliftML** is a Python package for scalable unconstrained and constrained uplift modeling from experimental data. To accommodate working with big data, the package uses PySpark and H2O models as base learners for the uplift models. Evaluation functions expect a PySpark dataframe as input.
 
 **Uplift modeling** is a family of techniques for estimating the Conditional Average Treatment Effect (CATE) from experimental or observational data using machine learning. In particular, we are interested in estimating the causal effect of a treatment T on the outcome Y of an individual characterized by features X. In experimental data with binary treatments and binary outcomes, this is equivalent to estimating Pr(Y=1 | T=1, X=x) - Pr(Y=1 | T=0, X=x).
