@@ -12,7 +12,7 @@ The **UpliftML** library includes PySpark/H2O implementations for the following:
 - The Retrospective Estimation[5] technique for uplift modeling under ROI constraints.
 - Uplift and iROI-based evaluation and plotting functions with bootstrapped confidence intervals. Currently implemented: ATE, ROI, iROI, CATE per category/quantile, CATE lift, Qini/AUUC curves[6], Qini/AUUC score[6], cumulative iROI curves.
 
-For detailed information about the package, read the documentation at TBD.
+For detailed information about the package, read the [UpliftML documentation](https://upliftml.readthedocs.io/).
 
 # Installation
 Install the latest release from PyPI:
@@ -87,7 +87,7 @@ Irene Teinemaa, Javier Albert, Nam Pham. **UpliftML: A Python Package for Scalab
 
 # Resources
 Documentation:
-* TBD
+* [UpliftML documentation](https://upliftml.readthedocs.io/)
 
 Tutorials and blog posts:
 * [Retrospective Estimation (blog post)](https://booking.ai/free-lunch-40a963e12b0a)
