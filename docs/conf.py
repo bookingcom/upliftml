@@ -33,7 +33,7 @@ release = '0.0.1'
 extensions = ['sphinxcontrib.bibtex', 'sphinx.ext.autodoc']
 bibtex_bibfiles = ['refs.bib']
 
-autodoc_mock_imports = ['pyspark', 'h2o', 'matplotlib', 'numpy', 'pandas', 'seaborn', 'scipy']
+autodoc_mock_imports = ['pyspark', 'h2o', 'matplotlib', 'numpy', 'pandas', 'seaborn', 'scipy', 'sklearn']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
