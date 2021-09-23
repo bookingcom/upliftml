@@ -67,18 +67,19 @@ For complete examples with more estimators and evaluation functions, see the dem
 If interested in contributing to the package, get started by reading our [contributor guidelines](CONTRIBUTING.md).
 
 # License
+The project is licensed under [Apache 2.0 License](https://github.com/bookingcom/upliftml/blob/main/LICENSE)
 
 # Citation
 If you use UpliftML, please cite it as follows:
 
-Irene Teinemaa, Javier Albert, Nam Pham. **UpliftML: A Python Package for Scalable Uplift Modeling.** https://github.com/bookingcom/upliftml, 2021. Version 0.x.
+Irene Teinemaa, Javier Albert, Nam Pham. **UpliftML: A Python Package for Scalable Uplift Modeling.** https://github.com/bookingcom/upliftml, 2021. Version 0.0.1.
 
 ```
 @misc{upliftml,
   author={Irene Teinemaa, Javier Albert, Nam Pham},
   title={{UpliftML}: {A Python Package for Scalable Uplift Modeling}},
   howpublished={https://github.com/bookingcom/upliftml},
-  note={Version 0.x},
+  note={Version 0.0.1},
   year={2021}
 }
 ```
