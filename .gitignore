@@ -28,3 +28,8 @@ venv/
 *.ipynb_checkpoints
 *h2ologs/
 *.log
+
+*.sw[a-p]
+*~
+Session.vim
+Sessionx.vim
