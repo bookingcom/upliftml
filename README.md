@@ -1,6 +1,6 @@
 [![Tests](https://github.com/bookingcom/upliftml/actions/workflows/main.yml/badge.svg)](https://github.com/bookingcom/upliftml/actions/workflows/main.yml)
 [![Docs](https://readthedocs.org/projects/upliftml/badge/?version=latest)](https://upliftml.readthedocs.io/en/latest/)
-[![PyPI Version](https://badge.fury.io/py/upliftml.svg)](https://pypi.org/project/upliftml/)
+[![PyPI](https://badge.fury.io/py/upliftml.svg)](https://pypi.org/project/upliftml/)
 [![Downloads](https://static.pepy.tech/badge/upliftml)](https://pepy.tech/project/upliftml)
 
 # UpliftML: A Python Package for Scalable Uplift Modeling
