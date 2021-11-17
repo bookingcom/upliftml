@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: java -version
     - name: Set up Java 8
-    - uses: actions/setup-java@v2
+      uses: actions/setup-java@v2
       with:
         distribution: 'temurin'
         java-version: '8'
