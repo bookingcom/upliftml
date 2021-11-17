@@ -1,0 +1,35 @@
+name: tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install poetry
+      run: |
+        python -m pip install poetry
+    - name: Install dependencies
+      run: |
+        poetry install
+    - name: Run tests
+      run: |
+        poetry run flake8 upliftml tests
+        poetry run black --check upliftml tests
+        poetry run isort {upliftml,tests}/*.py --check-only
+        poetry run mypy upliftml tests
+        poetry run pytest
