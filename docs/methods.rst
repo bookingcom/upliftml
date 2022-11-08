@@ -55,3 +55,35 @@ Estimators for Constrained Uplift Modeling
 ---------------------------------------------
 **Retrospective Estimation** :cite:p:`goldenberg2020free` estimates :math:`E[T | Y=1, X]`, which corresponds to estimating the multiplicative treatment effect :math:`E[Y | T=1, X] / E[Y | T=0, X]` in case of RCT data with a 50-50 split into treatment and control groups.
 
+Uplift Random Forest
+---------------------
+**Uplift Random Forest** :cite:p:`rzepakowski2012decision` is a tree-based algorithm that uses a splitting criterion which optimizes directly on the uplift. The authors quantify the gain in divergence as follows: 
+
+.. math::
+   D_{gain} = D_{after_{split}} (P^T, P^C) - D_{before_{split}}(P^T, P^C)
+
+where :math:`D` measures the divergence using one of three different metrics, that is, Kullback-Leibler (KL), Euclidean Distance (ED), and Chi-Squared (CHI), and :math:`P^T` and :math:`P^C` refer to the probability distribution of the outcome of interest in the treatment and control groups, respectively.
+
+**Kullback-Leibler (KL)**
+The Kullback-Leibler (KL) divergence is given by:
+
+.. math::
+   KL(P : Q) = \sum_{k=left, right}p_klog\frac{p_k}{q_k}
+
+where :math:`p` is the sample mean in the treatment group, :math:`q` is the sample mean in the control group and :math:`k` indicates the leaf in which :math:`p` and :math:`q` are computed :cite:`Gutierrez2016-co`
+
+**Euclidean Distance (ED)**
+The Euclidean Distance is given by:
+
+.. math::
+   ED(P : Q) = \sum_{k=left, right}(p_k - q_k)^2
+
+where the notation is the same as above.
+
+**Chi-Squared (CHI)**
+Finally, the :math:`\chi^2`-divergence is given by:
+
+.. math::
+   \chi^2(P : Q) = \sum_{k=left, right}\frac{(p_k - q_k)^2}{q_k}
+
+where the notation is again the same as above.

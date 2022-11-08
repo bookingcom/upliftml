@@ -829,3 +829,72 @@ class RetrospectiveEstimator:
             predictions (h2o.H2OFrame): a single column containing predictions for E[T | Y=1, X]
         """
         return self.model.predict(df_h2o)["p1"].set_names([self.output_colname])
+
+class UpliftRandomForestEstimator:
+    """Estimates treatment effect by using an uplift random forest estimator, that is a tree-based algorithm modified to infer treatment effects directly.
+
+    This approach was proposed by Sołtys et al. (2015) (https://link.springer.com/article/10.1007/s10618-014-0383-9) and Rzepakowski & Jaroszewicz (2010) (https://ieeexplore.ieee.org/abstract/document/5693998/)
+    """
+
+    def __init__(
+        self,
+        base_model_params: Dict,
+        predictor_colnames: List[str],
+        treatment_colname: str = "treatment",
+        target_colname: str = "outcome",
+        treatment_value: int = 1,
+        control_value: int = 0,
+        categorical_outcome: bool = False,
+        output_colname: str = "score",
+    ):
+        """Initializes the S-learner.
+
+        Args:
+            base_model_params (dict): parameters and their values for the H2O model
+            predictor_colnames (list of str): the column names that contain the predictor variables
+            treatment_colname (str, optional): the column name that contains the treatment indicators
+            target_colname (str, optional): the column name that contains the target
+            categorical_outcome (bool, optional): whether to treat the outcome as categorical
+            output_colname (str, optional): the column name for the estimator output
+        """
+        from h2o.estimators.uplift_random_forest import H2OUpliftRandomForestEstimator
+        
+        self.model = H2OUpliftRandomForestEstimator(**base_model_params)
+        self.predictor_colnames = predictor_colnames
+        self.treatment_colname = treatment_colname
+        self.target_colname = target_colname
+        self.categorical_outcome = categorical_outcome
+        self.output_colname = output_colname
+
+    def fit(self, df_h2o_train: h2o.H2OFrame, df_h2o_val: Optional[h2o.H2OFrame] = None) -> None:
+        """Trains the Uplift Random Forest estimator.
+
+        Args:
+            df_h2o_train (h2o.H2OFrame): a dataframe containing the treatment indicators, the observed outcomes, and predictors
+            df_h2o_val (h2o.H2OFrame, optional): a dataframe containing the treatment indicators, the observed outcomes, and predictors
+        """
+        factor_cols = [self.treatment_colname]
+        if self.categorical_outcome:
+            factor_cols.append(self.target_colname)
+        _prepare_factor_cols([df_h2o_train, df_h2o_val], factor_cols)
+
+        self.model.train(
+            x=self.predictor_colnames,
+            y=self.target_colname,
+            training_frame=df_h2o_train,
+            validation_frame=df_h2o_val,
+        )
+
+        _restore_factor_cols([df_h2o_train, df_h2o_val], factor_cols)
+
+    def predict(self, df_h2o: h2o.H2OFrame) -> h2o.H2OFrame:
+        """Applies the Uplift Random Forest and returns treatment effect predictions.
+
+        Args:
+            df_h2o (h2o.H2OFrame): a dataframe containing predictors
+
+        Returns:
+            predictions (h2o.H2OFrame): a single column containing treatment effect predictions
+        """
+        preds = self.model.predict(df_h2o)['uplift_predict'].set_names([self.output_colname])
+        return preds
