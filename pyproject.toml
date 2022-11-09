@@ -61,12 +61,12 @@ mkdocs-material = "^7.0.1"
 poetry = "^1.1"
 
 # h2o
-h2o = { url = "https://h2o-release.s3.amazonaws.com/h2o/rel-zipf/1/Python/h2o-3.32.1.1-py2.py3-none-any.whl" }
+h2o = { url = "https://h2o-release.s3.amazonaws.com/h2o/rel-zorn/4/Python/h2o-3.36.0.4-py2.py3-none-any.whl" }
 requests = "^2.25.1"
 colorama = ">=0.3.8"
 tabulate = "^0.8.9"
 future = "^0.18.2"
-"h2o-pysparkling-2.4" = "^3.36.0.1"
+"h2o-pysparkling-2.4" = "^3.36.0.4"
 
 [tool.black]
 line-length = 120
