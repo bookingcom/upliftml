@@ -27,9 +27,9 @@ pandas = "^1.2"
 seaborn = "^0.11.1"
 matplotlib = "^3.4.0"
 scikit-learn = "^0.24"
+pypandoc = "^1.7.0"
 
 [tool.poetry.dev-dependencies]
-pypandoc = "1.7.0"
 pyspark = "2.4.7"
 pyspark-stubs = "2.4.0.post9"
 pandas-stubs = "^1.0.4"
