@@ -29,7 +29,7 @@ matplotlib = "^3.4.0"
 scikit-learn = "^0.24"
 
 [tool.poetry.dev-dependencies]
-pypandoc = "1.10"
+pypandoc = "1.7.0"
 pyspark = "2.4.7"
 pyspark-stubs = "2.4.0.post9"
 pandas-stubs = "^1.0.4"

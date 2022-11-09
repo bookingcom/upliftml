@@ -1173,11 +1173,11 @@ Markdown = ">=3.2"
 
 [[package]]
 name = "pypandoc"
-version = "1.10"
+version = "1.7.0"
 description = "Thin wrapper for pandoc."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = "^3"
 
 [[package]]
 name = "pyparsing"
@@ -1735,7 +1735,7 @@ docs = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "efeeed55b45a5fe51b6eb466df39d37fec0ebc8344819d9c4aefc58a8b67e17a"
+content-hash = "c3e397067ffb10544726fe29ab553b44004fca2eb04404c913947fc1821216cf"
 
 [metadata.files]
 alabaster = [
@@ -2810,8 +2810,7 @@ pymdown-extensions = [
     {file = "pymdown_extensions-8.2-py3-none-any.whl", hash = "sha256:141452d8ed61165518f2c923454bf054866b85cf466feedb0eb68f04acdc2560"},
 ]
 pypandoc = [
-    {file = "pypandoc-1.10-py3-none-any.whl", hash = "sha256:ff9658cda18865a822695349a7c707756ecc454b59b71f920b554579ec54aaa7"},
-    {file = "pypandoc-1.10.tar.gz", hash = "sha256:101164d154f0b9957372cdbf285396153b74144fda47f531fb556de244efc86e"},
+    {file = "pypandoc-1.7.0.tar.gz", hash = "sha256:ff2aa68bef804396721f88c5dfac2747220980b22abe75c598dd0163c87742a8"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
