@@ -830,6 +830,7 @@ class RetrospectiveEstimator:
         """
         return self.model.predict(df_h2o)["p1"].set_names([self.output_colname])
 
+
 class UpliftRandomForestEstimator:
     """Estimates treatment effect by using an uplift random forest estimator, that is a tree-based algorithm modified to infer treatment effects directly.
 

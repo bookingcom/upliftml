@@ -1,17 +1,43 @@
 import logging
+import os
 import random
 import tempfile
 from typing import Generator
 
-from ai.h2o.sparkling import H2OConf, H2OContext  # type: ignore
 import h2o  # type: ignore
 import pytest
+from ai.h2o.sparkling import H2OConf, H2OContext  # type: ignore
 from pyspark.sql import SparkSession
 
 
 def _suppress_py4j_logging() -> None:
     logger = logging.getLogger("py4j")
     logger.setLevel(logging.WARN)
+
+
+def _verify_spark(spark: SparkSession) -> None:
+    """We need to verify that spark is running locally, without
+    access to any system-level configured cluster. A proxy for
+    that is the absence of a hive.metastore.uris property"""
+
+    # noinspection PyProtectedMember
+    iterator = spark.sparkContext._jsc.hadoopConfiguration().iterator()  # type: ignore
+    for conf in iterator:
+        if conf.getKey() == "hive.metastore.uris":
+            raise ValueError(
+                f"Detected a hive metastore configuration: {conf}. "
+                "Most likely this means this spark session is connected "
+                "to a remote cluster"
+            )
+
+
+def _clean_system_spark_env() -> None:
+    # The py/spark environment variables, if set, prevent
+    # from running the local test pyspark installation
+    # and run the system one. We never restore the
+    # previously set values (if there were any).
+    os.environ.pop("SPARK_HOME", None)
+    os.environ.pop("PYSPARK_PYTHON", None)
 
 
 def _create_h2o_context() -> None:
@@ -79,7 +105,9 @@ def spark(
     h2o_logs_dir: tempfile.TemporaryDirectory,
 ) -> Generator[SparkSession, None, None]:
     _suppress_py4j_logging()
+    _clean_system_spark_env()
     spark = _create_integration_test_pyspark_session(hive_warehouse_dir, derby_tmp_dir, h2o_logs_dir)
+    _verify_spark(spark)
     spark.sql("DROP DATABASE IF EXISTS test CASCADE")
     spark.sql("CREATE DATABASE IF NOT EXISTS test")
     spark.sql("USE test")

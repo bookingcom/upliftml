@@ -30,7 +30,7 @@ scikit-learn = "^0.24"
 
 [tool.poetry.dev-dependencies]
 pyspark = "2.4.7"
-pyspark-stubs = "2.4.0.post9"
+pyspark-stubs = "2.4.0.post12"
 pandas-stubs = "^1.0.4"
 psutil = "^5.8.0"
 pyarrow = "^3.0.0"
@@ -52,6 +52,7 @@ lxml = "^4.6"
 coverage = "^5.0b1"
 sphinx = "^4.0.2"
 sphinxcontrib-bibtex = "^2.3.0"
+pypandoc = "1.7.5"
 
 # mkdocs dependencies
 mkdocstrings = "^0.15"
