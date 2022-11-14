@@ -512,7 +512,7 @@ class RLearnerEstimator:
         residual_t = df_h2o_val[self.treatment_colname] - preds_t["propensity"]
 
         df_h2o_val["residual_target"] = residual_y / residual_t
-        df_h2o_val["weight"] = residual_t ** 2
+        df_h2o_val["weight"] = residual_t**2
 
         return df_h2o_val
 
@@ -859,7 +859,7 @@ class UpliftRandomForestEstimator:
             output_colname (str, optional): the column name for the estimator output
         """
         from h2o.estimators.uplift_random_forest import H2OUpliftRandomForestEstimator
-        
+
         self.model = H2OUpliftRandomForestEstimator(**base_model_params)
         self.predictor_colnames = predictor_colnames
         self.treatment_colname = treatment_colname
@@ -897,5 +897,5 @@ class UpliftRandomForestEstimator:
         Returns:
             predictions (h2o.H2OFrame): a single column containing treatment effect predictions
         """
-        preds = self.model.predict(df_h2o)['uplift_predict'].set_names([self.output_colname])
+        preds = self.model.predict(df_h2o)["uplift_predict"].set_names([self.output_colname])
         return preds
