@@ -12,8 +12,8 @@ def test_train_model_binary_outcome(spark: SparkSession, df_h2o_binary: h2o.H2OF
     predictor_colnames = [col for col in df_h2o_binary.columns if col.startswith("feature")]
 
     base_model_params = {
-        'treatment_column': 'treatment',
-        'uplift_metric': 'kl',
+        "treatment_column": "treatment",
+        "uplift_metric": "kl",
     }
 
     model = UpliftRandomForestEstimator(
@@ -21,9 +21,9 @@ def test_train_model_binary_outcome(spark: SparkSession, df_h2o_binary: h2o.H2OF
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
         treatment_colname="treatment",
-        treatment_value='1',
-        control_value='0',
-        categorical_outcome=True
+        treatment_value="1",
+        control_value="0",
+        categorical_outcome=True,
     )
 
     model.fit(df_h2o_binary)
@@ -52,8 +52,8 @@ def test_train_model_same_train_val_set(spark: SparkSession, df_h2o_binary: h2o.
     predictor_colnames = [col for col in df_h2o_binary.columns if col.startswith("feature")]
 
     base_model_params = {
-        'treatment_column': 'treatment',
-        'uplift_metric': 'kl',
+        "treatment_column": "treatment",
+        "uplift_metric": "kl",
     }
 
     model = UpliftRandomForestEstimator(
@@ -61,9 +61,9 @@ def test_train_model_same_train_val_set(spark: SparkSession, df_h2o_binary: h2o.
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
         treatment_colname="treatment",
-        treatment_value='1',
-        control_value='0',
-        categorical_outcome=True
+        treatment_value="1",
+        control_value="0",
+        categorical_outcome=True,
     )
 
     model.fit(df_h2o_binary, df_h2o_binary)
@@ -95,8 +95,8 @@ def test_train_model_val_set(spark: SparkSession, df_h2o_binary: h2o.H2OFrame, d
     predictor_colnames = [col for col in df_h2o_binary.columns if col.startswith("feature")]
 
     base_model_params = {
-        'treatment_column': 'treatment',
-        'uplift_metric': 'kl',
+        "treatment_column": "treatment",
+        "uplift_metric": "kl",
     }
 
     model = UpliftRandomForestEstimator(
@@ -104,9 +104,9 @@ def test_train_model_val_set(spark: SparkSession, df_h2o_binary: h2o.H2OFrame, d
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
         treatment_colname="treatment",
-        treatment_value='1',
-        control_value='0',
-        categorical_outcome=True
+        treatment_value="1",
+        control_value="0",
+        categorical_outcome=True,
     )
 
     model.fit(df_h2o_binary, df_h2o_binary_val)
