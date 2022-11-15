@@ -15,9 +15,9 @@ def test_train_model_binary_outcome(spark: SparkSession, df_h2o_binary: h2o.H2OF
         "treatment_column": "treatment",
         "uplift_metric": "kl",
         "auuc_type": "qini",
-        "auuc_nbins": 100,
-        "ntrees": 10,  # default: 50. But usually few trees work as good as many trees.
-        "max_depth": 10,  # default: 20. But usually shallow trees work as good as deep trees.
+        "auuc_nbins": 10,
+        "ntrees": 10,
+        "max_depth": 10,
     }
 
     model = UpliftRandomForestEstimator(
@@ -56,9 +56,9 @@ def test_train_model_same_train_val_set(spark: SparkSession, df_h2o_binary: h2o.
         "treatment_column": "treatment",
         "uplift_metric": "kl",
         "auuc_type": "qini",
-        "auuc_nbins": 100,
-        "ntrees": 10,  # default: 50. But usually few trees work as good as many trees.
-        "max_depth": 10,  # default: 20. But usually shallow trees work as good as deep trees.
+        "auuc_nbins": 10,
+        "ntrees": 10,
+        "max_depth": 10,
     }
 
     model = UpliftRandomForestEstimator(
@@ -100,9 +100,9 @@ def test_train_model_val_set(spark: SparkSession, df_h2o_binary: h2o.H2OFrame, d
         "treatment_column": "treatment",
         "uplift_metric": "kl",
         "auuc_type": "qini",
-        "auuc_nbins": 100,
-        "ntrees": 10,  # default: 50. But usually few trees work as good as many trees.
-        "max_depth": 10,  # default: 20. But usually shallow trees work as good as deep trees.
+        "auuc_nbins": 10,
+        "ntrees": 10,
+        "max_depth": 10,
     }
 
     model = UpliftRandomForestEstimator(
