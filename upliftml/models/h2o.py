@@ -873,7 +873,7 @@ class UpliftRandomForestEstimator:
             df_h2o_val (h2o.H2OFrame, optional): a dataframe containing the treatment indicators, the observed outcomes, and predictors
         """
         
-        assert df_h2o_train[self.target_colname].isfactor()[0] == True, 'The target column must be categorical as the estimator only supports binomial classification. '
+        assert df_h2o_train[self.target_colname].isfactor()[0] is True, 'The target column must be categorical as the estimator only supports binomial classification.'
         
         factor_cols = [self.treatment_colname]
         if self.categorical_outcome:
