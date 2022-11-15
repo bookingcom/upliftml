@@ -20,10 +20,7 @@ def test_train_model_binary_outcome(spark: SparkSession, df_h2o_binary: h2o.H2OF
         base_model_params=base_model_params,
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
-        treatment_colname="treatment",
-        treatment_value="1",
-        control_value="0",
-        categorical_outcome=True,
+        treatment_colname="treatment"
     )
 
     model.fit(df_h2o_binary)
@@ -60,10 +57,7 @@ def test_train_model_same_train_val_set(spark: SparkSession, df_h2o_binary: h2o.
         base_model_params=base_model_params,
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
-        treatment_colname="treatment",
-        treatment_value="1",
-        control_value="0",
-        categorical_outcome=True,
+        treatment_colname="treatment"
     )
 
     model.fit(df_h2o_binary, df_h2o_binary)
@@ -103,10 +97,7 @@ def test_train_model_val_set(spark: SparkSession, df_h2o_binary: h2o.H2OFrame, d
         base_model_params=base_model_params,
         predictor_colnames=predictor_colnames,
         target_colname="outcome",
-        treatment_colname="treatment",
-        treatment_value="1",
-        control_value="0",
-        categorical_outcome=True,
+        treatment_colname="treatment"
     )
 
     model.fit(df_h2o_binary, df_h2o_binary_val)
