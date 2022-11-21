@@ -873,7 +873,9 @@ class UpliftRandomForestEstimator:
             df_h2o_val (h2o.H2OFrame, optional): a dataframe containing the treatment indicators, the observed outcomes, and predictors
         """
         if df_h2o_train[self.target_colname].as_data_frame()[self.target_colname].nunique() > 2:
-            print("The target column must contain binary values as the estimator only supports binomial classification.")
+            print(
+                "The target column must contain binary values as the estimator only supports binomial classification."
+            )
             return None
 
         factor_cols = [self.treatment_colname]
