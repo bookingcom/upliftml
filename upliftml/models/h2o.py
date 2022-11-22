@@ -512,7 +512,7 @@ class RLearnerEstimator:
         residual_t = df_h2o_val[self.treatment_colname] - preds_t["propensity"]
 
         df_h2o_val["residual_target"] = residual_y / residual_t
-        df_h2o_val["weight"] = residual_t ** 2
+        df_h2o_val["weight"] = residual_t**2
 
         return df_h2o_val
 
@@ -829,3 +829,77 @@ class RetrospectiveEstimator:
             predictions (h2o.H2OFrame): a single column containing predictions for E[T | Y=1, X]
         """
         return self.model.predict(df_h2o)["p1"].set_names([self.output_colname])
+
+
+class UpliftRandomForestEstimator:
+    """Estimates treatment effect by using an uplift random forest estimator, that is a tree-based algorithm modified to infer treatment effects directly.
+
+    This approach was proposed by Sołtys et al. (2015) (https://link.springer.com/article/10.1007/s10618-014-0383-9) and Rzepakowski & Jaroszewicz (2010) (https://ieeexplore.ieee.org/abstract/document/5693998/)
+
+    Note that, as of November 2022, h2o only supports binomial classification.
+    """
+
+    def __init__(
+        self,
+        base_model_params: Dict,
+        predictor_colnames: List[str],
+        treatment_colname: str = "treatment",
+        target_colname: str = "outcome",
+        output_colname: str = "score",
+    ):
+        """Initializes the uplift random forest estimator.
+
+        Args:
+            base_model_params (dict): parameters and their values for the H2O model
+            predictor_colnames (list of str): the column names that contain the predictor variables
+            treatment_colname (str, optional): the column name that contains the treatment indicators
+            target_colname (str, optional): the column name that contains the target
+            output_colname (str, optional): the column name for the estimator output
+        """
+        from h2o.estimators.uplift_random_forest import H2OUpliftRandomForestEstimator
+
+        self.model = H2OUpliftRandomForestEstimator(**base_model_params)
+        self.predictor_colnames = predictor_colnames
+        self.treatment_colname = treatment_colname
+        self.target_colname = target_colname
+        self.categorical_outcome = True  # Currently, only binomial classification is supported
+        self.output_colname = output_colname
+
+    def fit(self, df_h2o_train: h2o.H2OFrame, df_h2o_val: Optional[h2o.H2OFrame] = None) -> None:
+        """Trains the uplift random forest estimator.
+
+        Args:
+            df_h2o_train (h2o.H2OFrame): a dataframe containing the treatment indicators, the observed outcomes, and predictors
+            df_h2o_val (h2o.H2OFrame, optional): a dataframe containing the treatment indicators, the observed outcomes, and predictors
+        """
+        if len(df_h2o_train[self.target_colname].unique().as_data_frame()["C1"].values) > 2:
+            print(
+                "The target column must contain binary values as the estimator only supports binomial classification."
+            )
+            return None
+
+        factor_cols = [self.treatment_colname]
+        if self.categorical_outcome:
+            factor_cols.append(self.target_colname)
+        _prepare_factor_cols([df_h2o_train, df_h2o_val], factor_cols)
+
+        self.model.train(
+            x=self.predictor_colnames,
+            y=self.target_colname,
+            training_frame=df_h2o_train,
+            validation_frame=df_h2o_val,
+        )
+
+        _restore_factor_cols([df_h2o_train, df_h2o_val], factor_cols)
+
+    def predict(self, df_h2o: h2o.H2OFrame) -> h2o.H2OFrame:
+        """Applies the rplift random forest and returns treatment effect predictions.
+
+        Args:
+            df_h2o (h2o.H2OFrame): a dataframe containing predictors
+
+        Returns:
+            predictions (h2o.H2OFrame): a single column containing treatment effect predictions
+        """
+        preds = self.model.predict(df_h2o)["uplift_predict"].set_names([self.output_colname])
+        return preds

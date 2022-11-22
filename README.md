@@ -18,7 +18,8 @@ Uplift modeling is an emerging tool for various personalization applications. Ex
 The **UpliftML** library includes PySpark/H2O implementations for the following:
 - 6 metalearner approaches for uplift modeling: T-learner[1], S-learner[1], X-learner[1], R-learner[2], class variable transformation[3], transformed outcome approach[4].
 - The Retrospective Estimation[5] technique for uplift modeling under ROI constraints.
-- Uplift and iROI-based evaluation and plotting functions with bootstrapped confidence intervals. Currently implemented: ATE, ROI, iROI, CATE per category/quantile, CATE lift, Qini/AUUC curves[6], Qini/AUUC score[6], cumulative iROI curves.
+- The Uplift Random Forest [6]; a tree-based algorithm for uplift modeling.
+- Uplift and iROI-based evaluation and plotting functions with bootstrapped confidence intervals. Currently implemented: ATE, ROI, iROI, CATE per category/quantile, CATE lift, Qini/AUUC curves[7], Qini/AUUC score[7], cumulative iROI curves.
 
 For detailed information about the package, read the [UpliftML documentation](https://upliftml.readthedocs.io/).
 
@@ -113,4 +114,5 @@ Related packages:
 3. Maciej Jaskowski and Szymon Jaroszewicz. Uplift modeling for clinical trial data. ICML Workshop on Clinical Data Analysis, 2012.
 4. Susan Athey and Guido W. Imbens. Machine learning methods for estimating heterogeneous causal effects. stat, 1050(5), 2015.
 5. Dmitri Goldenberg, Javier Albert, Lucas Bernardi, Pablo Estevez Castillo. Free Lunch! Retrospective Uplift Modeling for Dynamic Promotions Recommendation within ROI Constraints. In Fourteenth ACM Conference on Recommender Systems (pp. 486-491), 2020.
-6. Nicholas J Radcliffe and Patrick D Surry. Real-world uplift modelling with significance based uplift trees. White Paper tr-2011-1, Stochastic Solutions, 2011.
+6. Sołtys, Michał, Szymon Jaroszewicz, and Piotr Rzepakowski. Ensemble methods for uplift modeling. Data mining and knowledge discovery 29.6 (2015): 1531-1559.
+7. Nicholas J Radcliffe and Patrick D Surry. Real-world uplift modelling with significance based uplift trees. White Paper tr-2011-1, Stochastic Solutions, 2011.
