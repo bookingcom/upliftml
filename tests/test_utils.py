@@ -21,7 +21,7 @@ def test_linear_weighting(spark: SparkSession, df_pd_feature_importance_scores_o
     assert df_pd_feature_importance_scores_over_time.shape[0] == orig_shape[0]
 
     # Check if the new dataframe has one more column than the original dataframe
-    assert (df_pd_feature_importance_scores_over_time.shape[1] + 1) == orig_shape[1]
+    assert (df_pd_feature_importance_scores_over_time.shape[1]) == orig_shape[1] +1
 
     # Check if the weighted feature importance scores are equal to the first feature importance scores in the original dataframe
     assert pdf["weighted_feature_importance"] == df_pd_feature_importance_scores_over_time["2022-05-01"]
@@ -33,7 +33,7 @@ def test_min_max_normalization(spark: SparkSession, df_pd_feature_importance_sco
     pdf = min_max_normalization(df_pd_feature_importance_scores)
 
     # Check if the new dataframe still has the same number of rows as the original dataframe
-    assert pdf.shape == orig_shape
+    assert pdf.shape[0] == orig_shape[0]
 
     # Check if the range of scores for the features is between 0 and 1
     assert pdf["scores"].between(0, 1)
