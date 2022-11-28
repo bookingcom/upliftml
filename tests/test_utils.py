@@ -21,7 +21,7 @@ def test_linear_weighting(spark: SparkSession, df_pd_feature_importance_scores_o
     assert df_pd_feature_importance_scores_over_time.shape[0] == orig_shape[0]
 
     # Check if the new dataframe has one more column than the original dataframe
-    assert (df_pd_feature_importance_scores_over_time.shape[1]) == orig_shape[1] +1
+    assert (df_pd_feature_importance_scores_over_time.shape[1]) == orig_shape[1] + 1
 
     # Check if the weighted feature importance scores are equal to the first feature importance scores in the original dataframe
     assert pdf["weighted_feature_importance"] == df_pd_feature_importance_scores_over_time["2022-05-01"]
