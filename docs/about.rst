@@ -17,4 +17,6 @@ The **UpliftML** library includes PySpark and H2O implementations for the follow
 
 - 6 metalearner approaches for CATE estimation: T-learner :cite:p:`kunzel2019metalearners`, S-learner :cite:p:`kunzel2019metalearners`, X-learner :cite:p:`kunzel2019metalearners`, R-learner :cite:p:`nie2021quasi`, Class Variable Transformation :cite:p:`jaskowski2012uplift`, Transformed Outcome approach :cite:p:`athey2015machine`.
 - The Retrospective Estimation :cite:p:`goldenberg2020free` technique for constrained uplift modeling.
+- The Uplift Random Forest :cite:p:`rzepakowski2012decision`; a tree-based algorithm for uplift modeling.
 - Uplift and iROI-based evaluation and plotting functions with bootstrapped confidence intervals. Currently implemented: ATE, ROI, iROI, CATE per category/quantile, CATE lift, Qini/AUUC curves :cite:p:`radcliffe2011real`, Qini/AUUC score :cite:p:`radcliffe2011real`, cumulative iROI curves.
+- Feature Selection Methods including Divergence Filters :cite:p:`zhao2022feature`, Net Information Value :cite:p:`larsen2015data`:, Uplift Curve :cite:p:`hu2022customer`, and Permutation with Uplift Random Forest.

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "upliftml"
-version = "0.0.2"
+version = "0.0.3"
 description = "A Python package for uplift modeling with PySpark and H2O"
 authors = ["Javier Albert <javier.albert@booking.com>", "Nam Pham <nam.pham@booking.com>", "Irene Teinemaa <irene.teinemaa@booking.com>"]
 readme = "README.md"
