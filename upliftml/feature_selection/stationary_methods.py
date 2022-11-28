@@ -7,7 +7,6 @@ import pandas as pd
 import pyspark
 from h2o.estimators.uplift_random_forest import H2OUpliftRandomForestEstimator
 from pyspark.sql import functions as F
-from pysparkling import H2OContext
 
 from utils import discretizing, get_feature_importance_scores_as_pdf
 
