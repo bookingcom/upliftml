@@ -1,5 +1,6 @@
 import h2o  # type: ignore
 from pyspark.sql import SparkSession
+from sklearn.metrics import r2_score  # type: ignore
 
 from upliftml.models.h2o import UpliftRandomForestEstimator
 
