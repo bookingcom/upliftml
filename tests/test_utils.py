@@ -4,7 +4,6 @@ import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import approxCountDistinct
-from sklearn.metrics import r2_score  # type: ignore
 
 from upliftml.feature_selection.utils import linear_weighting, min_max_normalization, discretizing
 
