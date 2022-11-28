@@ -46,13 +46,13 @@ def linear_weighting(pdf: pd.DataFrame, window: int, feature_colname: str = "fea
     for i, col in enumerate(pdf.drop([feature_colname], axis=1).columns):
         i += 1
         weighted_feature_importance += (i / window) * pdf[col]
-    pdf["weighted_feature_importance"] = weighted_feature_importance.values
+    pdf["weighted_feature_importance"] = weighted_feature_importance
     pdf = pdf.sort_values(by="weighted_feature_importance", ascending=False)
 
     return pdf
 
 
-def min_max_normalization(pdf: pd.DataFrame, feature_colname: str = "feature") -> pd.DataFrame:
+def min_max_normalization(pdf: pd.DataFrame, feature_colname: str = "feature") -> pd.Series:
     """
     Min-max normalization. Assumes that the first column contains the name of the features.
 
@@ -68,7 +68,7 @@ def min_max_normalization(pdf: pd.DataFrame, feature_colname: str = "feature") -
     )
 
 
-def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins=10) -> Tuple:
+def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins: int = 10) -> Tuple:
     """
     Discretize the given features using QuantileDiscretizer
 
@@ -83,7 +83,7 @@ def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins=10) -> Tuple:
         (list): List of new feature names
     """
     pdf_distinct_count = df.agg(*(approxCountDistinct(F.col(c)).alias(c) for c in features)).toPandas()
-    input_features = pdf_distinct_count.loc[:, (pdf_distinct_count > n_bins).any()].columns.to_list()
+    input_features = pdf_distinct_count.loc[:, (pdf_distinct_count > n_bins).any()].columns.tolist()
     output_features = [feature + "_buckets" for feature in input_features]
     qds1 = QuantileDiscretizer(inputCols=input_features, outputCols=output_features, numBuckets=n_bins)
     df = qds1.fit(df).transform(df)

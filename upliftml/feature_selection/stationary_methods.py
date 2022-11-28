@@ -7,7 +7,11 @@ import pandas as pd
 import pyspark
 from h2o.estimators.uplift_random_forest import H2OUpliftRandomForestEstimator
 from pyspark.sql import functions as F
-from utils import discretizing, get_feature_importance_scores_as_pdf
+
+from upliftml.feature_selection.utils import (
+    discretizing,
+    get_feature_importance_scores_as_pdf,
+)
 
 
 class DivergenceFilter:
@@ -128,8 +132,8 @@ class DivergenceFilter:
         df: pyspark.sql.DataFrame,
         feature_name: str,
         total_size: int,
-        evaluation_function,
-        d_all: pyspark.sql.DataFrame,
+        evaluation_function: Any,
+        d_all: float,
     ) -> Tuple:
         """
         Calculate the feature importance score for one feature
@@ -139,7 +143,7 @@ class DivergenceFilter:
             feature_name (str): Name of the feature
             total_size (int): Number of all samples
             evaluation_function: The divergence method to be used to rank the features.
-            d_all (pyspark.sql.DataFrame): Divergence between treatment and control responder using all the data
+            d_all (float): Divergence between treatment and control responder using all the data
 
         Returns:
             A tuple, containing:
@@ -279,7 +283,7 @@ class DivergenceFilter:
         kl = pk * np.log(pk / qk) + (1 - pk) * np.log((1 - pk) / (1 - qk))
         return kl
 
-    def evaluate_ed(self, node_summary: Dict):
+    def evaluate_ed(self, node_summary: Dict) -> float:
         """
         Evaluate the divergence using Euclidean Distance
 
@@ -298,7 +302,7 @@ class DivergenceFilter:
                 d_ed += 2 * (node_summary[treatment_group][0] - pc) ** 2
         return d_ed
 
-    def evaluate_chi(self, node_summary: Dict):
+    def evaluate_chi(self, node_summary: Dict) -> float:
         """
         Evaluate the divergence using Chi-Squared
 
@@ -466,8 +470,8 @@ class UpliftCurveFilter:
         self,
         df: pyspark.sql.DataFrame,
         feature_name: str,
-        feature_importance_scores_dict: Dict,
-        features_variables_importances: Dict,
+        feature_importance_scores_dict: Dict[str, float],
+        features_variables_importances: Dict[str, float],
     ) -> None:
         """
         Calculate the feature importance score for one feature
@@ -496,7 +500,7 @@ class UpliftCurveFilter:
         )
         feature_importance_scores_dict[feature_name.replace("_buckets", "")] = relevant_score
 
-    def calculate_uplift_curve_based_importance(self, pdf: pd.DataFrame, feature_name: str, key: Any):
+    def calculate_uplift_curve_based_importance(self, pdf: pd.DataFrame, feature_name: str, key: Any) -> float:
         """
         Calculate the feature importance score for one feature using uplift curve
 
