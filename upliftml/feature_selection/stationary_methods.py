@@ -176,10 +176,8 @@ class DivergenceFilter:
         divergence = d_feature - d_all
 
         results = pd.DataFrame(
-            {"feature": feature_name.replace("_buckets", ""), "score": divergence}, index=[0]
-        ).reset_index(
-            drop=True
-        )  # flake8: noqa
+            {"feature": feature_name.replace("_buckets", ""), "score": divergence}, index=[0]  # type: ignore
+        ).reset_index(drop=True)
 
         # Release memory
         del [pdf_grouped_feature_rows]
@@ -202,7 +200,7 @@ class DivergenceFilter:
         treatment_group_keys = pdf[self.treatment_colname].unique().tolist()
         y_name_keys = pdf[self.target_colname].unique().tolist()
 
-        results = {}  # type: Dict[type, float]
+        results = {}  # type: ignore
         for ti in treatment_group_keys:
             results.update({ti: {}})
             for ci in y_name_keys:
@@ -498,8 +496,8 @@ class UpliftCurveFilter:
             relevant_scores_per_variables_dict[key] = score
             relevant_score += score
         features_variables_importances.update(
-            {feature_name.replace("_buckets", ""): relevant_scores_per_variables_dict}
-        )  # flake8: noqa
+            {feature_name.replace("_buckets", ""): relevant_scores_per_variables_dict}  # type: ignore
+        )
         feature_importance_scores_dict[feature_name.replace("_buckets", "")] = relevant_score
 
     def calculate_uplift_curve_based_importance(self, pdf: pd.DataFrame, feature_name: str, key: Any) -> float:
