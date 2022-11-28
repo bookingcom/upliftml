@@ -1,6 +1,6 @@
 import h2o  # type: ignore
-import pyspark
-import pytest
+import pyspark  # type: ignore
+import pytest  # type: ignore
 from pyspark.sql import SparkSession
 from sklearn.metrics import r2_score  # type: ignore
 
