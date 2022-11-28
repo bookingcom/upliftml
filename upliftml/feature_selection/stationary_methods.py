@@ -79,7 +79,7 @@ class DivergenceFilter:
             evaluation_function = self.evaluate_chi
         else:
             print("Please select either 'KL', 'ED', or 'Chi' as method")
-            return feature_importance_scores
+            return feature_importance_scores, features_variables_importances
 
         # Size of the Dataframe
         total_size = df.cache().count()
@@ -456,8 +456,8 @@ class UpliftCurveFilter:
 
         df_grouped_features_rows = (df.groupBy(all_columns).agg(F.count("*").alias("num_rows"))).cache()
 
-        feature_importance_scores_dict = {}
-        features_variables_importances = {}
+        feature_importance_scores_dict = {}  # type: Dict[str, float]
+        features_variables_importances = {}  # type: Dict[str, float]
         for feature in features:
             self.calculate_feature_importance_per_feature(
                 df_grouped_features_rows, feature, feature_importance_scores_dict, features_variables_importances
@@ -537,7 +537,7 @@ class UpliftCurveFilter:
         term_1 = tr / nt if nt > 0 else 0
         term_2 = cr / nc if nc > 0 else 0
 
-        return (term_1 - term_2) * ((nt + nc) / pdf["num_rows"].sum())
+        return float((term_1 - term_2) * ((nt + nc) / pdf["num_rows"].sum()))
 
 
 class NetInformationValueFilter:
@@ -602,8 +602,8 @@ class NetInformationValueFilter:
             df.groupBy(self.treatment_colname, self.target_colname).agg(F.count("*").alias("num_rows")).toPandas()
         )
 
-        feature_importance_scores_dict = {}
-        features_variables_importances = {}
+        feature_importance_scores_dict = {}  # type: Dict[str, float]
+        features_variables_importances = {}  # type: Dict[str, float]
         for feature in features:
             self.calculate_feature_importance_per_feature(
                 df_grouped_features_rows,
@@ -677,8 +677,12 @@ class NetInformationValueFilter:
 
         ep_treatment_non_responder = self.empirical_probability(pdf_feature, pdf_groups, 1, 0, feature_name, key)
 
-        return net_weight_of_evidence * (
-            (ep_treatment_responder * ep_control_non_responder) - (ep_control_responder * ep_treatment_non_responder)
+        return float(
+            net_weight_of_evidence
+            * (
+                (ep_treatment_responder * ep_control_non_responder)
+                - (ep_control_responder * ep_treatment_non_responder)
+            )
         )
 
     def get_net_weight_of_evidence(
