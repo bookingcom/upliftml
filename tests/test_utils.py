@@ -24,7 +24,7 @@ def test_linear_weighting(spark: SparkSession, df_pd_feature_importance_scores_o
     assert (pdf.shape[1]) == orig_shape[1] + 1
 
     # Check if the weighted feature importance scores are equal to the first feature importance scores in the original dataframe
-    assert pdf["feature"].equals(df_pd_feature_importance_scores_over_time["feature"])
+    assert pdf["feature"].equals(df_pd_feature_importance_scores_over_time["feature"])  # type: ignore
 
 
 def test_min_max_normalization(spark: SparkSession, df_pd_feature_importance_scores: pd.DataFrame) -> None:
