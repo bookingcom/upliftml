@@ -2,7 +2,9 @@ import h2o  # type: ignore
 import pyspark  # type: ignore
 from pyspark.sql import SparkSession
 
-from upliftml.feature_selection.stationary_methods import PermutationUpliftRandomForestWrapper
+from upliftml.feature_selection.stationary_methods import (
+    PermutationUpliftRandomForestWrapper,
+)
 
 
 def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pyspark.sql.DataFrame) -> None:

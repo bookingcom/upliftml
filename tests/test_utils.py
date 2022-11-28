@@ -1,11 +1,15 @@
 import h2o  # type: ignore
+import pandas as pd  # type: ignore
 import pyspark  # type: ignore
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F  # type: ignore
 from pyspark.sql.functions import approxCountDistinct  # type: ignore
-import pandas as pd  # type: ignore
 
-from upliftml.feature_selection.utils import linear_weighting, min_max_normalization, discretizing
+from upliftml.feature_selection.utils import (
+    discretizing,
+    linear_weighting,
+    min_max_normalization,
+)
 
 
 def test_linear_weighting(spark: SparkSession, df_pd_feature_importance_scores_over_time: pd.DataFrame) -> None:
