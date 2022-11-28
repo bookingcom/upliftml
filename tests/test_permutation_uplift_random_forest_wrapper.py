@@ -10,7 +10,6 @@ from upliftml.feature_selection.stationary_methods import PermutationUpliftRando
 def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pyspark.sql.DataFrame, method: str) -> None:
     df_spark_binary = df_spark_binary.drop("propensity", "expected_outcome", "actual_cate")
     features = [col for col in df_spark_binary.columns if "feature" in col]
-    n_bins = 10
 
     categorical_features = ["treatment", "outcome"]
 

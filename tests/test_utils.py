@@ -6,7 +6,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import approxCountDistinct
 from sklearn.metrics import r2_score  # type: ignore
 
-from upliftml.feature_selection.utils import *
+from upliftml.feature_selection.utils import linear_weighting, min_max_normalization, discretizing
 
 
 def test_linear_weighting(spark: SparkSession, df_pd_feature_importance_scores_over_time: pd.DataFrame) -> None:
@@ -30,10 +30,10 @@ def test_min_max_normalization(spark: SparkSession, df_pd_feature_importance_sco
     pdf = min_max_normalization(df_pd_feature_importance_scores)
 
     # Check if the new dataframe still has the same number of rows as the original dataframe
-    assert df_pd_feature_importance_scores.shape == orig_shape
+    assert pdf.shape == orig_shape
 
     # Check if the range of scores for the features is between 0 and 1
-    assert df_pd_feature_importance_scores["scores"].between(0, 1)
+    assert pdf["scores"].between(0, 1)
 
 
 def test_discretizing(spark: SparkSession, df_spark_binary: pyspark.sql.DataFrame) -> None:

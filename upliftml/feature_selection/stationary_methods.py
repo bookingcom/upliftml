@@ -180,7 +180,6 @@ class DivergenceFilter:
         # Release memory
         del [pdf_grouped_feature_rows]
         gc.collect()
-        pdf_grouped_feature_rows = pd.DataFrame()
 
         return results, feature_variable_dict
 
