@@ -85,8 +85,10 @@ def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins: int = 10) ->
     pdf_distinct_count = df.agg(*(approxCountDistinct(F.col(c)).alias(c) for c in features)).toPandas()
     input_features = pdf_distinct_count.loc[:, (pdf_distinct_count > n_bins).any()].columns.tolist()
     output_features = [feature + "_buckets" for feature in input_features]
-    qds1 = QuantileDiscretizer(inputCols=input_features, outputCols=output_features, numBuckets=n_bins)  # type: ignore
-    df = qds1.fit(df).transform(df)
+    # Since pyspark 3.0.0 inputCols and outputCols
+    for input_feature, output_feature in zip(input_features, output_features):
+        qds1 = QuantileDiscretizer(inputCol=input_feature, outputCol=output_feature, numBuckets=n_bins)
+        df = qds1.fit(df).transform(df)
     features_new = [feature for feature in features if feature not in input_features]
     features_new.extend(output_features)
 
