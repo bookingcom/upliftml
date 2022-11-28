@@ -1,12 +1,11 @@
 import h2o  # type: ignore
 import pyspark  # type: ignore
-from pyspark.sql import SparkSession
-from sklearn.metrics import r2_score  # type: ignore
+from pyspark.sql import SparkSession  # type: ignore
 
 from upliftml.feature_selection.stationary_methods import NetInformationValueFilter
 
 
-def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pyspark.sql.DataFrame, method: str) -> None:
+def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pyspark.sql.DataFrame) -> None:
     df_spark_binary = df_spark_binary.drop("propensity", "expected_outcome", "actual_cate")
     features = [col for col in df_spark_binary.columns if "feature" in col]
     n_bins = 10

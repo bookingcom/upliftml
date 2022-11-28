@@ -2,7 +2,6 @@ import h2o  # type: ignore
 import pyspark  # type: ignore
 import pytest  # type: ignore
 from pyspark.sql import SparkSession
-from sklearn.metrics import r2_score  # type: ignore
 
 from upliftml.feature_selection.stationary_methods import DivergenceFilter
 
