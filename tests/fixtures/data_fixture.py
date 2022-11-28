@@ -1,9 +1,9 @@
 from typing import Generator
 
 import h2o  # type: ignore
+import pandas as pd
 import pyspark.sql
 import pytest
-import pandas as pd
 from pyspark.sql import SparkSession
 
 from upliftml.datasets import simulate_randomized_trial
