@@ -34,7 +34,7 @@ def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pysp
         durf_dict=durf_dict, factor_list=categorical_features, n_repeats=3
     )
 
-    df_h2o = h2o.H2OFrame(df_spark_binary)
+    df_h2o = h2o.H2OFrame(df_spark_binary.toPandas())
     furp = permutation_urf.calculate_feature_importance(df_h2o, features)
 
     # Check if the feature importance dataframe contains as much rows as we have features
