@@ -35,7 +35,8 @@ def test_calculate_feature_importance(spark: SparkSession, df_spark_binary: pysp
         durf_dict=durf_dict, factor_list=categorical_features, n_repeats=3
     )
 
-    fi_non_dynamicity_p = permutation_urf.calculate_feature_importance(h2o.H2OFrame(df_spark_binary), features)
+    df_h2o = h2o.H2OFrame(df_spark_binary)
+    fi_non_dynamicity_p = permutation_urf.calculate_feature_importance(df_h2o, features)
 
     # Check if the feature importance dataframe contains as much rows as we have features
     assert fi_non_dynamicity_p.shape[0] == len(features)
