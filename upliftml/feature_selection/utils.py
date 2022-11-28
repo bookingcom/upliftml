@@ -65,7 +65,7 @@ def min_max_normalization(pdf: pd.DataFrame, feature_colname: str = "feature") -
     """
     return (pdf.loc[:, pdf.columns != feature_colname] - pdf.loc[:, pdf.columns != feature_colname].min()) / (
         pdf.loc[:, pdf.columns != feature_colname].max() - pdf.loc[:, pdf.columns != feature_colname].min()
-    )  # type: ignore
+    )  # flake8: noqa
 
 
 def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins: int = 10) -> Tuple:
