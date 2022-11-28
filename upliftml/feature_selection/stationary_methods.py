@@ -177,7 +177,9 @@ class DivergenceFilter:
 
         results = pd.DataFrame(
             {"feature": feature_name.replace("_buckets", ""), "score": divergence}, index=[0]
-        ).reset_index(drop=True)
+        ).reset_index(
+            drop=True
+        )  # type: ignore
 
         # Release memory
         del [pdf_grouped_feature_rows]
@@ -200,7 +202,7 @@ class DivergenceFilter:
         treatment_group_keys = pdf[self.treatment_colname].unique().tolist()
         y_name_keys = pdf[self.target_colname].unique().tolist()
 
-        results = {}
+        results = {}  # type: Dict[int, float]
         for ti in treatment_group_keys:
             results.update({ti: {}})
             for ci in y_name_keys:
@@ -252,7 +254,7 @@ class DivergenceFilter:
         if self.control_value not in node_summary:
             return 0
         pc = node_summary[self.control_value][0]
-        d_kl = 0
+        d_kl = 0.0
         for treatment_group in node_summary:
             if treatment_group != self.control_value:
                 d_kl += DivergenceFilter.kl_divergence(node_summary[treatment_group][0], pc)
@@ -483,7 +485,7 @@ class UpliftCurveFilter:
             features_variables_importances (dict): Dictionary containing each feature's variable importance
         """
 
-        relevant_score = 0
+        relevant_score = 0.0
         pdf_grouped_feature_rows = (
             df.groupBy(feature_name, self.treatment_colname, self.target_colname)
             .agg(F.sum("num_rows").alias("num_rows"))
@@ -497,7 +499,7 @@ class UpliftCurveFilter:
             relevant_score += score
         features_variables_importances.update(
             {feature_name.replace("_buckets", ""): relevant_scores_per_variables_dict}
-        )
+        )  # type: ignore
         feature_importance_scores_dict[feature_name.replace("_buckets", "")] = relevant_score
 
     def calculate_uplift_curve_based_importance(self, pdf: pd.DataFrame, feature_name: str, key: Any) -> float:
@@ -635,7 +637,7 @@ class NetInformationValueFilter:
             feature_importance_scores_dict (dict): Dictionary containing the feature importance scores
             features_variables_importances (dict): Dictionary containing each feature's variable importance
         """
-        niv_score = 0
+        niv_score = 0.0
         pdf_grouped_feature_rows = (
             df_features.groupBy(feature_name, self.treatment_colname, self.target_colname)
             .agg(F.sum("num_rows").alias("num_rows"))

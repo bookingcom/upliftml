@@ -65,7 +65,7 @@ def min_max_normalization(pdf: pd.DataFrame, feature_colname: str = "feature") -
     """
     return (pdf.loc[:, pdf.columns != feature_colname] - pdf.loc[:, pdf.columns != feature_colname].min()) / (
         pdf.loc[:, pdf.columns != feature_colname].max() - pdf.loc[:, pdf.columns != feature_colname].min()
-    )
+    )  # type: ignore
 
 
 def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins: int = 10) -> Tuple:
@@ -85,7 +85,7 @@ def discretizing(df: pyspark.sql.DataFrame, features: list, n_bins: int = 10) ->
     pdf_distinct_count = df.agg(*(approxCountDistinct(F.col(c)).alias(c) for c in features)).toPandas()
     input_features = pdf_distinct_count.loc[:, (pdf_distinct_count > n_bins).any()].columns.tolist()
     output_features = [feature + "_buckets" for feature in input_features]
-    qds1 = QuantileDiscretizer(inputCols=input_features, outputCols=output_features, numBuckets=n_bins)
+    qds1 = QuantileDiscretizer(inputCols=input_features, outputCols=output_features, numBuckets=n_bins)  # type: ignore
     df = qds1.fit(df).transform(df)
     features_new = [feature for feature in features if feature not in input_features]
     features_new.extend(output_features)
@@ -104,6 +104,6 @@ def get_feature_importance_scores_as_pdf(results_dict: Dict) -> pd.DataFrame:
         pdf (pd.DataFrame): Dataframe containing the feature importance scores for each feature
 
     """
-    pdf = pd.DataFrame(results_dict.items(), columns=["feature", "score"]).sort_values(by="score", ascending=False)
+    pdf = pd.DataFrame(results_dict.items(), columns=["feature", "score"]).sort_values(by="score", ascending=False)  # type: ignore
     pdf.reset_index(drop=True, inplace=True)
     return pdf
