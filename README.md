@@ -20,6 +20,7 @@ The **UpliftML** library includes PySpark/H2O implementations for the following:
 - The Retrospective Estimation[5] technique for uplift modeling under ROI constraints.
 - The Uplift Random Forest [6]; a tree-based algorithm for uplift modeling.
 - Uplift and iROI-based evaluation and plotting functions with bootstrapped confidence intervals. Currently implemented: ATE, ROI, iROI, CATE per category/quantile, CATE lift, Qini/AUUC curves[7], Qini/AUUC score[7], cumulative iROI curves.
+- Feature Selection Methods including Divergence Filters [8], Net Information Value [9], Uplift Curve [10], and Permutation with Uplift Random Forest.
 
 For detailed information about the package, read the [UpliftML documentation](https://upliftml.readthedocs.io/).
 
@@ -116,3 +117,6 @@ Related packages:
 5. Dmitri Goldenberg, Javier Albert, Lucas Bernardi, Pablo Estevez Castillo. Free Lunch! Retrospective Uplift Modeling for Dynamic Promotions Recommendation within ROI Constraints. In Fourteenth ACM Conference on Recommender Systems (pp. 486-491), 2020.
 6. Sołtys, Michał, Szymon Jaroszewicz, and Piotr Rzepakowski. Ensemble methods for uplift modeling. Data mining and knowledge discovery 29.6 (2015): 1531-1559.
 7. Nicholas J Radcliffe and Patrick D Surry. Real-world uplift modelling with significance based uplift trees. White Paper tr-2011-1, Stochastic Solutions, 2011.
+8. Zhao, Zhenyu, et al. "Feature Selection Methods for Uplift Modeling and Heterogeneous Treatment Effect." IFIP International Conference on Artificial Intelligence Applications and Innovations. Springer, Cham, 2022.
+9. Larsen, Kim. "Data Exploration with Weight of Evidence and Information Value in R." Retrieved Date from https://multithreaded. stitchfix. com/blog/2015/08/13/weight-of-evidence (2015).
+10. Hu, Jinping. "Customer feature selection from high-dimensional bank direct marketing data for uplift modeling." Journal of Marketing Analytics (2022): 1-12.
