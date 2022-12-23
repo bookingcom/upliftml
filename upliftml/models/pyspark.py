@@ -399,9 +399,6 @@ class CVTEstimator:
         """
 
         df_cols = df.columns
-        df = df.withColumn(
-            "cvt_label", F.when(F.col(self.treatment_colname) == F.col(self.target_colname), 1).otherwise(0)
-        )
         df = self.model.transform(df)
         split_udf = udf(lambda value: value[1].item(), FloatType())
         df = df.withColumn("prob", split_udf("probability"))
