@@ -7,6 +7,7 @@ import pandas as pd
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import seaborn as sns  # type: ignore
+from scipy import stats
 from pyspark.ml.feature import QuantileDiscretizer
 from pyspark.sql import Column, DataFrame, Window
 from sklearn.metrics import auc  # type: ignore
@@ -192,10 +193,12 @@ def _compute_ci(
     bucket_colname: Optional[str] = None,
     relevant_cols: Optional[List[str]] = None,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> DataFrame:
-    """Computes confidence intervals from bootstrapped samples of the dataset. For more details on this procedure,
-    see https://ocw.mit.edu/courses/mathematics/18-05-introduction-to-probability-and-statistics-spring-2014/
-        readings/MIT18_05S14_Reading24.pdf.
+    """Computes correct confidence intervals from bootstrapped samples of the dataset.
+    If `use_std_error` is True, the standard error is computed, and confidence intervals are
+    derived using standard-normal critical values. Otherwise, basic bootstrap (Reverse
+    Percentile Interval) is used https://arxiv.org/abs/1411.5279.
 
     Args:
         df (pyspark.sql.DataFrame): a Spark dataframe
@@ -205,6 +208,9 @@ def _compute_ci(
             to calculate confidence intervals for
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pyspark.sql.DataFrame): a Spark dataframe containing point estimates and confidence intervals
@@ -233,27 +239,42 @@ def _compute_ci(
     for col in relevant_cols:
         deltas = deltas.withColumn(f"{col}_delta", F.col(col) - F.col(f"{col}_pe"))
 
-    # get quantiles for the diffs
-    agg_exprs = [
-        F.expr(f"percentile_approx({col}_delta, {ci_quantiles[1]})").alias(f"{col}_delta_lower")
-        for col in relevant_cols
-    ]
-    agg_exprs += [
-        F.expr(f"percentile_approx({col}_delta, {ci_quantiles[0]})").alias(f"{col}_delta_upper")
-        for col in relevant_cols
-    ]
-    agg_exprs += [F.first(F.col(f"{col}_pe")).alias(col) for col in relevant_cols]
+    # add point estimate and standard error columns
+    agg_exprs = [F.first(F.col(f"{col}_pe")).alias(col) for col in relevant_cols]
     agg_exprs += [F.sqrt(F.mean(F.pow(F.col(f"{col}_delta"), 2))).alias(f"{col}_std_error") for col in relevant_cols]
 
-    deltas_ci = deltas.groupby(group_cols).agg(*agg_exprs)
+    if use_std_error:
+        crit_lower, crit_upper = stats.norm.ppf(ci_quantiles)
+        agg_exprs += [
+            F.expr(f"{col}_pe - {crit_lower}*{col}_std_error").alias(f"{col}_lower")
+            for col in relevant_cols
+        ]
+        agg_exprs += [
+            F.expr(f"{col}_pe + {crit_upper}*{col}_std_error").alias(f"{col}_upper")
+            for col in relevant_cols
+        ]
 
-    # calculate upper and lower bounds of the estimates, based on the quantile values for the diffs
-    for col in relevant_cols:
-        deltas_ci = (
-            deltas_ci.withColumn(f"{col}_lower", F.col(col) - F.col(f"{col}_delta_lower"))
-            .withColumn(f"{col}_upper", F.col(col) - F.col(f"{col}_delta_upper"))
-            .drop(f"{col}_delta_lower", f"{col}_delta_upper")
-        )
+        deltas_ci = deltas.groupby(group_cols).agg(*agg_exprs)
+    else:
+        # get quantiles for the diffs
+        agg_exprs += [
+            F.expr(f"percentile_approx({col}_delta, {ci_quantiles[1]})").alias(f"{col}_delta_lower")
+            for col in relevant_cols
+        ]
+        agg_exprs += [
+            F.expr(f"percentile_approx({col}_delta, {ci_quantiles[0]})").alias(f"{col}_delta_upper")
+            for col in relevant_cols
+        ]
+
+        deltas_ci = deltas.groupby(group_cols).agg(*agg_exprs)
+
+        # calculate upper and lower bounds of the estimates, based on the quantile values for the diffs
+        for col in relevant_cols:
+            deltas_ci = (
+                deltas_ci.withColumn(f"{col}_lower", F.col(col) - F.col(f"{col}_delta_lower"))
+                .withColumn(f"{col}_upper", F.col(col) - F.col(f"{col}_delta_upper"))
+                .drop(f"{col}_delta_lower", f"{col}_delta_upper")
+            )
 
     # add other relevant columns from the original sample
     if bucket_colname is None:
@@ -387,6 +408,7 @@ def estimate_ate(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> Dict:
     """Estimates the average treatment effect in a Spark DataFrame.
 
@@ -401,6 +423,9 @@ def estimate_ate(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         Dict with estimates of the target rate in the control group, the target rate in the treatment group, and the ATE,
@@ -424,7 +449,7 @@ def estimate_ate(
     relevant_cols = ["target_rate_control", "target_rate_treated", "ate"]
     if bootstrap:
         # calculate confidence intervals
-        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles)
+        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles, use_std_error=use_std_error)
 
         # ensure that the order of the returned values is right
         select_cols = []
@@ -444,6 +469,7 @@ def estimate_roi(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> Dict:
     """Estimates the return on investment in a Spark DataFrame.
 
@@ -455,6 +481,9 @@ def estimate_roi(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         Dict with estimate of the ROI, with or without lower and upper bounds.
@@ -474,7 +503,7 @@ def estimate_roi(
     relevant_cols = ["roi"]
     if bootstrap:
         # calculate confidence intervals
-        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles)
+        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles, use_std_error=use_std_error)
 
         # ensure that the order of the returned values is right
         select_cols = []
@@ -497,6 +526,7 @@ def estimate_iroi(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> Dict:
     """Estimates the incremental return on investment in a Spark DataFrame.
 
@@ -513,6 +543,9 @@ def estimate_iroi(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         Dict of estimates of the iROI, incremental benefit, and incremental cost, all with or without lower and upper bounds depending on whether bootstrapping is performed.
@@ -536,7 +569,7 @@ def estimate_iroi(
     relevant_cols = ["iroi", "incremental_benefit", "incremental_cost"]
     if bootstrap:
         # calculate confidence intervals
-        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles)
+        df_counts = _compute_ci(df_counts, relevant_cols=relevant_cols, ci_quantiles=ci_quantiles, use_std_error=use_std_error)
 
         # ensure that the order of the returned values is right
         select_cols = []
@@ -556,6 +589,7 @@ def estimate_target_rate_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Estimates conditional average treatment effects per bucket in a Spark DataFrame.
 
@@ -568,6 +602,9 @@ def estimate_target_rate_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing CATE estimates (with or without confidence intervals),
@@ -588,7 +625,7 @@ def estimate_target_rate_per_bucket(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["target_rate"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["target_rate"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [F.col(bucket_colname), F.col("count"), F.col("fraction")]
@@ -605,6 +642,7 @@ def estimate_target_rate_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and estimates average
         treatment effects per bucket.
@@ -621,6 +659,9 @@ def estimate_target_rate_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing CATE estimates (with or without confidence intervals),
@@ -641,6 +682,7 @@ def estimate_target_rate_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
 
@@ -694,6 +736,7 @@ def estimate_and_plot_target_rate_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -712,6 +755,9 @@ def estimate_and_plot_target_rate_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -733,6 +779,7 @@ def estimate_and_plot_target_rate_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_metric_per_bucket(quantile_df, y="target_rate", bootstrap=bootstrap, sort_x=sort_x, ax=ax)
@@ -747,6 +794,7 @@ def estimate_and_plot_target_rate_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -762,6 +810,9 @@ def estimate_and_plot_target_rate_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -781,6 +832,7 @@ def estimate_and_plot_target_rate_per_bucket(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_metric_per_bucket(quantile_df, y="target_rate", bootstrap=bootstrap, sort_x=sort_x, ax=ax)
@@ -798,6 +850,7 @@ def estimate_cate_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Estimates the conditional average treatment effects per bucket in a Spark DataFrame.
 
@@ -814,6 +867,9 @@ def estimate_cate_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing CATE estimates (with or without confidence intervals),
@@ -837,7 +893,7 @@ def estimate_cate_per_bucket(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [F.col(bucket_colname), F.col("count"), F.col("fraction")]
@@ -857,6 +913,7 @@ def estimate_cate_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and estimates average treatment
         effects per bucket.
@@ -877,6 +934,9 @@ def estimate_cate_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing CATE estimates (with or without confidence intervals),
@@ -900,6 +960,7 @@ def estimate_cate_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
 
@@ -915,6 +976,7 @@ def estimate_and_plot_cate_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -937,6 +999,9 @@ def estimate_and_plot_cate_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -961,6 +1026,7 @@ def estimate_and_plot_cate_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_metric_per_bucket(quantile_df, bootstrap=bootstrap, sort_x=sort_x, ax=ax)
@@ -978,6 +1044,7 @@ def estimate_and_plot_cate_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -997,6 +1064,9 @@ def estimate_and_plot_cate_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -1019,6 +1089,7 @@ def estimate_and_plot_cate_per_bucket(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_metric_per_bucket(quantile_df, bootstrap=bootstrap, sort_x=sort_x, ax=ax)
@@ -1037,6 +1108,7 @@ def estimate_iroi_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Estimates incremental ROI per bucket in a Spark DataFrame.
 
@@ -1054,6 +1126,9 @@ def estimate_iroi_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing iROI estimates (with or without confidence intervals),
@@ -1078,7 +1153,7 @@ def estimate_iroi_per_bucket(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["iroi"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["iroi"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [F.col(bucket_colname), F.col("count"), F.col("fraction")]
@@ -1099,6 +1174,7 @@ def estimate_iroi_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and estimates iROI per bucket.
 
@@ -1119,6 +1195,9 @@ def estimate_iroi_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing iROI estimates (with or without confidence intervals),
@@ -1143,6 +1222,7 @@ def estimate_iroi_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
 
@@ -1157,6 +1237,7 @@ def estimate_and_plot_iroi_per_bucket(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -1176,6 +1257,9 @@ def estimate_and_plot_iroi_per_bucket(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -1199,6 +1283,7 @@ def estimate_and_plot_iroi_per_bucket(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_metric_per_bucket(quantile_df, x="bucket", y="iroi", bootstrap=bootstrap, sort_x=sort_x, ax=ax)
@@ -1219,6 +1304,7 @@ def estimate_and_plot_iroi_per_quantile(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     sort_x: bool = True,
     ax: Any = None,
 ) -> Tuple:
@@ -1242,6 +1328,9 @@ def estimate_and_plot_iroi_per_quantile(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         sort_x (bool, optional): if True, x-axis will be sorted from highest metric value to lowest
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
@@ -1266,6 +1355,7 @@ def estimate_and_plot_iroi_per_quantile(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
         add_labels=add_labels,
     )
 
@@ -1285,6 +1375,7 @@ def estimate_cate_lift(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and cumulatively estimates CATE lift
         (with or without confidence intervals).
@@ -1303,6 +1394,9 @@ def estimate_cate_lift(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing the CATE lift estimates (with or without confidence intervals),
@@ -1333,7 +1427,7 @@ def estimate_cate_lift(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [F.col(bucket_colname), F.col("count"), F.col("fraction")]
@@ -1396,6 +1490,7 @@ def estimate_and_plot_cate_lift(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     ax: Any = None,
 ) -> Tuple:
     """Divides the data into buckets based on model score quantiles, cumulatively estimates CATE lift
@@ -1416,6 +1511,9 @@ def estimate_and_plot_cate_lift(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
     Returns:
@@ -1438,6 +1536,7 @@ def estimate_and_plot_cate_lift(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_cate_lift(df_lift, label=label, bootstrap=bootstrap, ax=ax)
@@ -1456,6 +1555,7 @@ def estimate_qini(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and estimates Qini values
         (with or without confidence intervals).
@@ -1474,6 +1574,9 @@ def estimate_qini(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing Qini estimates (with or without confidence intervals),
@@ -1506,7 +1609,7 @@ def estimate_qini(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["ate"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [bucket_colname, "count", "fraction", "threshold"]
@@ -1585,6 +1688,7 @@ def estimate_and_plot_qini(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     ax: Any = None,
 ) -> Tuple:
     """Divides the data into buckets based on model score quantiles, estimates the Qini values
@@ -1606,6 +1710,9 @@ def estimate_and_plot_qini(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
     Returns:
@@ -1628,6 +1735,7 @@ def estimate_and_plot_qini(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     qini_score = compute_qini_coefficient(df_qini)
@@ -1696,6 +1804,7 @@ def estimate_cum_iroi(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
 ) -> pd.DataFrame:
     """Divides the data into buckets based on model score quantiles and estimates cumulative iROI
         (with or without confidence intervals).
@@ -1715,6 +1824,9 @@ def estimate_cum_iroi(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
 
     Returns:
         (pandas.DataFrame): a dataframe containing cumulative iROI estimates (with or without confidence intervals),
@@ -1746,7 +1858,7 @@ def estimate_cum_iroi(
 
     if bootstrap:
         df_counts = _compute_ci(
-            df_counts, bucket_colname=bucket_colname, relevant_cols=["iroi"], ci_quantiles=ci_quantiles
+            df_counts, bucket_colname=bucket_colname, relevant_cols=["iroi"], ci_quantiles=ci_quantiles, use_std_error=use_std_error
         )
 
     select_cols = [bucket_colname, "count", "fraction", "threshold"]
@@ -1820,6 +1932,7 @@ def estimate_and_plot_cum_iroi(
     bootstrap: bool = False,
     n_bootstraps: int = 100,
     ci_quantiles: Optional[List[float]] = None,
+    use_std_error: bool = True,
     ax: Any = None,
 ) -> Tuple:
     """Divides the data into buckets based on model score quantiles, estimates cumulative iROI
@@ -1842,6 +1955,9 @@ def estimate_and_plot_cum_iroi(
         n_bootstraps (int, optional): the number of bootstraps to perform. Only has an effect if bootstrap=True
         ci_quantiles (list of float, optional): the lower and upper confidence bounds.
             Only has an effect if bootstrap=True
+        use_std_error (bool, optional): if True (default), bootstrapped samples are used to calculate
+            the standard deviation of metrics and Normal(0, 1) critical values to derive the
+            confidence interval.
         ax (matplotlib.axes._subplots.AxesSubplot, optional): if specified, the plot will be plotted on this ax. Useful when creating a figure with subplots.
 
     Returns:
@@ -1865,6 +1981,7 @@ def estimate_and_plot_cum_iroi(
         bootstrap=bootstrap,
         n_bootstraps=n_bootstraps,
         ci_quantiles=ci_quantiles,
+        use_std_error=use_std_error,
     )
 
     ax = plot_cum_iroi(df_iroi, label=label, plot_overall=plot_overall, bootstrap=bootstrap, ax=ax)
